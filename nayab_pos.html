@@ -1,0 +1,242 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Nayab POS Software</title>
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;background:#f4f6fa;color:#172033}
+.app{display:flex;min-height:100vh}.side{width:245px;background:#111827;color:#fff;padding:20px 14px;position:fixed;inset:0 auto 0 0}.brand{font-size:22px;font-weight:800;padding:8px 10px 25px}.navbtn{width:100%;border:0;background:transparent;color:#dbe4f0;text-align:left;padding:13px 12px;border-radius:9px;margin:3px 0;cursor:pointer;font-weight:700}.navbtn:hover,.navbtn.active{background:#2563eb;color:#fff}
+.main{margin-left:245px;width:calc(100% - 245px);padding:25px}.top{display:flex;align-items:center;justify-content:space-between;margin-bottom:22px}.top h1{margin:0}.clock{color:#667085}.page{display:none}.page.active{display:block}
+.cards{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}.stat{background:#fff;border-radius:14px;padding:20px;box-shadow:0 4px 18px #10182812}.stat b{font-size:27px;display:block;margin-top:8px}
+.panel{background:#fff;border-radius:14px;padding:20px;box-shadow:0 4px 18px #10182812;margin-top:18px}.panel h2{margin-top:0}.grid2{display:grid;grid-template-columns:1.2fr .8fr;gap:18px}
+input,select,textarea{width:100%;padding:11px;border:1px solid #d5dbe5;border-radius:8px;margin:6px 0 12px;background:#fff}.row{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}.row3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+button.primary,.btn{border:0;background:#2563eb;color:#fff;padding:11px 15px;border-radius:8px;font-weight:700;cursor:pointer}.btn.secondary{background:#475467}.btn.danger{background:#dc2626}.btn.success{background:#16a34a}
+table{width:100%;border-collapse:collapse}th,td{padding:11px;border-bottom:1px solid #eaecf0;text-align:left;font-size:14px}.right{text-align:right}.bill-total{font-size:25px;font-weight:800}.search{font-size:16px}
+.product-list{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;max-height:470px;overflow:auto}.product{border:1px solid #e4e7ec;border-radius:10px;padding:12px;cursor:pointer}.product:hover{border-color:#2563eb;background:#f7faff}.product small{color:#667085}
+.badge{display:inline-block;padding:4px 8px;border-radius:99px;background:#eef4ff;color:#175cd3;font-size:12px;font-weight:700}
+.empty{text-align:center;color:#667085;padding:30px}
+@media(max-width:900px){.side{width:190px}.main{margin-left:190px;width:calc(100% - 190px)}.cards{grid-template-columns:repeat(2,1fr)}.grid2{grid-template-columns:1fr}.product-list{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:600px){.side{position:static;width:100%;height:auto}.app{display:block}.main{margin:0;width:100%;padding:14px}.cards,.row,.row3,.product-list{grid-template-columns:1fr}.top{display:block}.top h1{margin-bottom:6px}.side nav{display:grid;grid-template-columns:repeat(2,1fr)}}
+</style>
+</head>
+<body>
+<div class="app">
+<aside class="side">
+  <div class="brand">NAYAB POS</div>
+  <nav>
+    <button class="navbtn active" data-page="dashboard">Dashboard</button>
+    <button class="navbtn" data-page="billing">POS Billing</button>
+    <button class="navbtn" data-page="customers">Customers</button>
+    <button class="navbtn" data-page="statements">Statements</button>
+    <button class="navbtn" data-page="stock">Stock</button>
+    <button class="navbtn" data-page="expenses">Expenses</button>
+    <button class="navbtn" data-page="returns">Returns</button>
+    <button class="navbtn" data-page="sales">Sales Reports</button>
+    <button class="navbtn" data-page="settings">Settings</button>
+  </nav>
+</aside>
+
+<main class="main">
+<div class="top"><div><h1 id="pageTitle">Dashboard</h1><div class="clock" id="clock"></div></div></div>
+
+<section class="page active" id="dashboard">
+ <div class="cards">
+  <div class="stat">Today's Sales<b id="dSales">Rs. 0</b></div>
+  <div class="stat">Today's Bills<b id="dBills">0</b></div>
+  <div class="stat">Stock Items<b id="dStock">0</b></div>
+  <div class="stat">Customers<b id="dCustomers">0</b></div>
+ </div>
+ <div class="panel"><h2>Quick Actions</h2>
+  <button class="btn" onclick="showPage('billing')">New Bill</button>
+  <button class="btn success" onclick="showPage('stock')">Add Stock</button>
+  <button class="btn secondary" onclick="showPage('customers')">Add Customer</button>
+  <button class="btn danger" onclick="showPage('expenses')">Add Expense</button>
+ </div>
+</section>
+
+<section class="page" id="billing">
+ <div class="grid2">
+  <div class="panel">
+   <h2>POS Billing</h2>
+   <input id="productSearch" class="search" placeholder="Search product / barcode / SKU" oninput="renderProducts()">
+   <div class="product-list" id="productList"></div>
+  </div>
+  <div class="panel">
+   <h2>Current Bill</h2>
+   <div id="billItems"></div>
+   <div class="row"><div><label>Customer</label><select id="billCustomer"></select></div><div><label>Payment</label><select id="billPayment"><option>Cash</option><option>Account</option><option>Card</option></select></div></div>
+   <div class="right"><div>Subtotal: <b id="billSubtotal">Rs. 0</b></div><div class="bill-total">Total: <span id="billTotal">Rs. 0</span></div></div>
+   <button class="btn success" onclick="completeSale()">Complete Sale</button>
+   <button class="btn danger" onclick="clearBill()">Clear</button>
+  </div>
+ </div>
+</section>
+
+<section class="page" id="customers">
+ <div class="panel"><h2>Add Customer</h2>
+  <div class="row"><input id="cName" placeholder="Customer name"><input id="cPhone" placeholder="Phone"></div>
+  <div class="row"><input id="cAddress" placeholder="Address"><input id="cOpening" type="number" placeholder="Opening balance"></div>
+  <button class="btn" onclick="addCustomer()">Save Customer</button>
+ </div>
+ <div class="panel"><h2>Customer List</h2><div id="customerTable"></div></div>
+</section>
+
+<section class="page" id="statements">
+ <div class="panel"><h2>Customer Statements</h2>
+  <select id="statementCustomer" onchange="renderStatement()"></select>
+  <div id="statementBox" class="empty">Select a customer.</div>
+ </div>
+</section>
+
+<section class="page" id="stock">
+ <div class="panel"><h2>Add / Update Stock</h2>
+  <div class="row3"><input id="pName" placeholder="Product name"><input id="pBarcode" placeholder="Barcode / SKU"><input id="pPrice" type="number" placeholder="Sale price"></div>
+  <div class="row3"><input id="pCost" type="number" placeholder="Cost price"><input id="pQty" type="number" placeholder="Quantity"><input id="pMin" type="number" placeholder="Minimum stock"></div>
+  <button class="btn" onclick="saveProduct()">Save / Add Stock</button>
+ </div>
+ <div class="panel"><h2>Stock Register</h2><div id="stockTable"></div></div>
+</section>
+
+<section class="page" id="expenses">
+ <div class="panel"><h2>Add Expense</h2>
+  <div class="row"><input id="eTitle" placeholder="Expense title"><input id="eAmount" type="number" placeholder="Amount"></div>
+  <textarea id="eNote" placeholder="Note"></textarea>
+  <button class="btn danger" onclick="addExpense()">Save Expense</button>
+ </div>
+ <div class="panel"><h2>Expense Register</h2><div id="expenseTable"></div></div>
+</section>
+
+<section class="page" id="returns">
+ <div class="panel"><h2>Sales Return</h2>
+  <input id="returnBill" placeholder="Bill number">
+  <input id="returnProduct" placeholder="Product name">
+  <input id="returnQty" type="number" placeholder="Return quantity">
+  <button class="btn danger" onclick="processReturn()">Process Return</button>
+  <div id="returnMsg" class="muted"></div>
+ </div>
+ <div class="panel"><h2>Return Register</h2><div id="returnTable"></div></div>
+</section>
+
+<section class="page" id="sales">
+ <div class="cards">
+  <div class="stat">Total Sales<b id="rSales">Rs. 0</b></div>
+  <div class="stat">Total Bills<b id="rBills">0</b></div>
+  <div class="stat">Total Expenses<b id="rExpenses">Rs. 0</b></div>
+  <div class="stat">Returns<b id="rReturns">Rs. 0</b></div>
+ </div>
+ <div class="panel"><h2>Sales Register</h2><div id="salesTable"></div></div>
+</section>
+
+<section class="page" id="settings">
+ <div class="panel"><h2>Software Settings</h2>
+  <div class="row"><input id="storeName" value="Nayab Store" placeholder="Business name"><input id="currency" value="Rs." placeholder="Currency"></div>
+  <button class="btn" onclick="saveSettings()">Save Settings</button>
+  <p id="settingsMsg" class="muted"></p>
+ </div>
+</section>
+</main>
+</div>
+
+<script>
+const KEY='nayab_pos_v2';
+let db=JSON.parse(localStorage.getItem(KEY)||'null')||{
+ products:[
+  {id:1,name:'Fresh Milk 1L',barcode:'1001',price:280,cost:240,stock:20,min:5},
+  {id:2,name:'Premium Biscuits',barcode:'1002',price:180,cost:140,stock:30,min:5},
+  {id:3,name:'Fruit Drink',barcode:'1003',price:150,cost:100,stock:25,min:5},
+  {id:4,name:'Premium Rice',barcode:'1004',price:620,cost:550,stock:15,min:3}
+ ],customers:[],sales:[],expenses:[],returns:[],bill:[],settings:{name:'Nayab Store',currency:'Rs.'}
+};
+function save(){localStorage.setItem(KEY,JSON.stringify(db));refreshAll()}
+function money(n){return (Number(n)||0).toLocaleString('en-PK')}
+function showPage(id){
+ document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));
+ document.getElementById(id).classList.add('active');
+ document.querySelectorAll('.navbtn').forEach(x=>x.classList.toggle('active',x.dataset.page===id));
+ const names={dashboard:'Dashboard',billing:'POS Billing',customers:'Customers',statements:'Statements',stock:'Stock',expenses:'Expenses',returns:'Returns',sales:'Sales Reports',settings:'Settings'};
+ document.getElementById('pageTitle').textContent=names[id]||id;
+ refreshAll();
+ window.scrollTo({top:0,behavior:'smooth'});
+}
+document.querySelectorAll('.navbtn').forEach(b=>b.onclick=()=>showPage(b.dataset.page));
+function renderProducts(){
+ const q=(document.getElementById('productSearch').value||'').toLowerCase();
+ const arr=db.products.filter(p=>(p.name+' '+p.barcode).toLowerCase().includes(q));
+ document.getElementById('productList').innerHTML=arr.map(p=>`<div class="product" onclick="addToBill(${p.id})"><b>${p.name}</b><br><small>${p.barcode} • Stock: ${p.stock}</small><br><b>${db.settings.currency} ${money(p.price)}</b></div>`).join('')||'<div class="empty">No product found</div>';
+}
+function addToBill(id){
+ const p=db.products.find(x=>x.id===id); if(!p)return;
+ if(p.stock<=0){alert('Out of stock');return}
+ const item=db.bill.find(x=>x.id===id); if(item){if(item.qty>=p.stock){alert('Not enough stock');return}item.qty++}else db.bill.push({id:p.id,name:p.name,price:p.price,qty:1});
+ renderBill();
+}
+function renderBill(){
+ document.getElementById('billItems').innerHTML=db.bill.length?`<table><tr><th>Item</th><th>Qty</th><th>Price</th><th></th></tr>${db.bill.map((x,i)=>`<tr><td>${x.name}</td><td><button onclick="changeQty(${i},-1)">−</button> ${x.qty} <button onclick="changeQty(${i},1)">+</button></td><td>${money(x.price*x.qty)}</td><td><button class="btn danger" onclick="removeBill(${i})">×</button></td></tr>`).join('')}</table>`:'<div class="empty">No items in bill</div>';
+ const total=db.bill.reduce((s,x)=>s+x.price*x.qty,0);document.getElementById('billSubtotal').textContent=db.settings.currency+' '+money(total);document.getElementById('billTotal').textContent=db.settings.currency+' '+money(total);
+}
+function changeQty(i,d){const x=db.bill[i],p=db.products.find(y=>y.id===x.id);x.qty+=d;if(x.qty<=0)db.bill.splice(i,1);else if(x.qty>p.stock)x.qty=p.stock;renderBill()}
+function removeBill(i){db.bill.splice(i,1);renderBill()}
+function clearBill(){db.bill=[];renderBill()}
+function completeSale(){
+ if(!db.bill.length){alert('Bill is empty');return}
+ const total=db.bill.reduce((s,x)=>s+x.price*x.qty,0), customerId=Number(document.getElementById('billCustomer').value)||null;
+ const sale={id:Date.now(),bill:'BILL-'+String(Date.now()).slice(-7),date:new Date().toISOString(),customerId,payment:document.getElementById('billPayment').value,total,items:JSON.parse(JSON.stringify(db.bill))};
+ db.bill.forEach(x=>{const p=db.products.find(y=>y.id===x.id);p.stock-=x.qty});
+ db.sales.push(sale);db.bill=[];save();alert('Sale saved: '+sale.bill);
+}
+function addCustomer(){
+ const name=document.getElementById('cName').value.trim(),phone=document.getElementById('cPhone').value.trim();
+ if(!name){alert('Customer name required');return}
+ db.customers.push({id:Date.now(),name,phone,address:document.getElementById('cAddress').value,opening:Number(document.getElementById('cOpening').value)||0});
+ ['cName','cPhone','cAddress','cOpening'].forEach(id=>document.getElementById(id).value='');save();
+}
+function saveProduct(){
+ const name=document.getElementById('pName').value.trim(),barcode=document.getElementById('pBarcode').value.trim(),price=Number(document.getElementById('pPrice').value)||0,qty=Number(document.getElementById('pQty').value)||0;
+ if(!name||!barcode||!price){alert('Product name, barcode/SKU and price are required');return}
+ let p=db.products.find(x=>x.barcode===barcode);
+ if(p){p.stock+=qty;p.price=price;p.cost=Number(document.getElementById('pCost').value)||p.cost;p.min=Number(document.getElementById('pMin').value)||p.min}
+ else db.products.push({id:Date.now(),name,barcode,price,cost:Number(document.getElementById('pCost').value)||0,stock:qty,min:Number(document.getElementById('pMin').value)||0});
+ ['pName','pBarcode','pPrice','pCost','pQty','pMin'].forEach(id=>document.getElementById(id).value='');save();
+}
+function addExpense(){
+ const title=document.getElementById('eTitle').value.trim(),amount=Number(document.getElementById('eAmount').value)||0;if(!title||!amount){alert('Expense title and amount required');return}
+ db.expenses.push({id:Date.now(),title,amount,note:document.getElementById('eNote').value,date:new Date().toISOString()});['eTitle','eAmount','eNote'].forEach(id=>document.getElementById(id).value='');save();
+}
+function processReturn(){
+ const bill=document.getElementById('returnBill').value.trim(),name=document.getElementById('returnProduct').value.trim(),qty=Number(document.getElementById('returnQty').value)||0;
+ const sale=db.sales.find(s=>s.bill===bill);if(!sale||!name||qty<=0){document.getElementById('returnMsg').textContent='Bill, product and quantity are required.';return}
+ const item=sale.items.find(x=>x.name.toLowerCase()===name.toLowerCase());if(!item||qty>item.qty){document.getElementById('returnMsg').textContent='Product/quantity not found in that bill.';return}
+ const p=db.products.find(x=>x.id===item.id);if(p)p.stock+=qty;const amount=qty*item.price;
+ db.returns.push({id:Date.now(),bill,product:name,qty,amount,date:new Date().toISOString()});
+ sale.total=Math.max(0,sale.total-amount);document.getElementById('returnMsg').textContent='Return processed and stock restored.';save();
+}
+function renderCustomers(){
+ document.getElementById('customerTable').innerHTML=db.customers.length?`<table><tr><th>Name</th><th>Phone</th><th>Opening</th></tr>${db.customers.map(c=>`<tr><td>${c.name}</td><td>${c.phone||''}</td><td>${money(c.opening)}</td></tr>`).join('')}</table>`:'<div class="empty">No customers yet</div>';
+ const opts='<option value="">Select customer</option>'+db.customers.map(c=>`<option value="${c.id}">${c.name} - ${c.phone||''}</option>`).join('');document.getElementById('billCustomer').innerHTML=opts;document.getElementById('statementCustomer').innerHTML=opts;
+}
+function renderStatement(){
+ const id=Number(document.getElementById('statementCustomer').value);const c=db.customers.find(x=>x.id===id);if(!c){document.getElementById('statementBox').innerHTML='Select a customer.';return}
+ const sales=db.sales.filter(s=>s.customerId===id), total=sales.reduce((a,s)=>a+s.total,0);
+ document.getElementById('statementBox').innerHTML=`<h3>${c.name}</h3><p>Phone: ${c.phone||''}</p><p>Opening balance: <b>${money(c.opening)}</b></p><p>Total sales: <b>${money(total)}</b></p>`+(sales.length?`<table><tr><th>Bill</th><th>Date</th><th>Payment</th><th>Total</th></tr>${sales.map(s=>`<tr><td>${s.bill}</td><td>${new Date(s.date).toLocaleString()}</td><td>${s.payment}</td><td>${money(s.total)}</td></tr>`).join('')}</table>`:'');
+}
+function renderStock(){document.getElementById('stockTable').innerHTML=`<table><tr><th>Product</th><th>Barcode</th><th>Price</th><th>Stock</th><th>Status</th></tr>${db.products.map(p=>`<tr><td>${p.name}</td><td>${p.barcode}</td><td>${money(p.price)}</td><td>${p.stock}</td><td>${p.stock<=p.min?'<span class="badge">Low Stock</span>':'OK'}</td></tr>`).join('')}</table>`}
+function renderExpenses(){document.getElementById('expenseTable').innerHTML=db.expenses.length?`<table><tr><th>Date</th><th>Title</th><th>Amount</th></tr>${db.expenses.map(e=>`<tr><td>${new Date(e.date).toLocaleString()}</td><td>${e.title}</td><td>${money(e.amount)}</td></tr>`).join('')}</table>`:'<div class="empty">No expenses yet</div>'}
+function renderReturns(){document.getElementById('returnTable').innerHTML=db.returns.length?`<table><tr><th>Date</th><th>Bill</th><th>Product</th><th>Qty</th><th>Amount</th></tr>${db.returns.map(r=>`<tr><td>${new Date(r.date).toLocaleString()}</td><td>${r.bill}</td><td>${r.product}</td><td>${r.qty}</td><td>${money(r.amount)}</td></tr>`).join('')}</table>`:'<div class="empty">No returns yet</div>'}
+function renderSales(){
+ const sales=db.sales.reduce((a,s)=>a+s.total,0), exp=db.expenses.reduce((a,e)=>a+e.amount,0), ret=db.returns.reduce((a,r)=>a+r.amount,0);
+ document.getElementById('rSales').textContent=db.settings.currency+' '+money(sales);document.getElementById('rBills').textContent=db.sales.length;document.getElementById('rExpenses').textContent=db.settings.currency+' '+money(exp);document.getElementById('rReturns').textContent=db.settings.currency+' '+money(ret);
+ document.getElementById('salesTable').innerHTML=db.sales.length?`<table><tr><th>Bill</th><th>Date</th><th>Customer</th><th>Payment</th><th>Total</th></tr>${db.sales.map(s=>{let c=db.customers.find(x=>x.id===s.customerId);return `<tr><td>${s.bill}</td><td>${new Date(s.date).toLocaleString()}</td><td>${c?c.name:'Walk-in'}</td><td>${s.payment}</td><td>${money(s.total)}</td></tr>`}).join('')}</table>`:'<div class="empty">No sales yet</div>';
+}
+function saveSettings(){db.settings.name=document.getElementById('storeName').value||'Nayab Store';db.settings.currency=document.getElementById('currency').value||'Rs.';save();document.getElementById('settingsMsg').textContent='Settings saved.'}
+function refreshAll(){
+ renderProducts();renderBill();renderCustomers();renderStatement();renderStock();renderExpenses();renderReturns();renderSales();
+ document.getElementById('dSales').textContent=db.settings.currency+' '+money(db.sales.filter(s=>new Date(s.date).toDateString()===new Date().toDateString()).reduce((a,s)=>a+s.total,0));
+ document.getElementById('dBills').textContent=db.sales.filter(s=>new Date(s.date).toDateString()===new Date().toDateString()).length;
+ document.getElementById('dStock').textContent=db.products.length;document.getElementById('dCustomers').textContent=db.customers.length;
+}
+function tick(){document.getElementById('clock').textContent=new Date().toLocaleString('en-PK')}
+setInterval(tick,1000);tick();refreshAll();
+</script>
+</body>
+</html>
