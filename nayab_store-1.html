@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Nayab Store - Online Store</title>
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;background:#f5f7fb;color:#14213d}
+header{background:#fff;position:sticky;top:0;z-index:5;border-bottom:1px solid #e5e7eb}
+.nav{max-width:1180px;margin:auto;padding:16px 18px;display:flex;align-items:center;gap:18px}.logo{font-size:23px;font-weight:800;color:#1769e0;margin-right:auto}
+.nav a{color:#14213d;text-decoration:none;font-weight:600}.cart{background:#1769e0;color:#fff;border:0;border-radius:9px;padding:10px 14px}
+.hero{background:linear-gradient(135deg,#102445,#1769e0);color:#fff}.heroIn{max-width:1180px;margin:auto;padding:65px 18px}.hero h1{font-size:44px;margin:0 0 12px}.hero p{font-size:18px;opacity:.9}
+.wrap{max-width:1180px;margin:auto;padding:45px 18px}.title{text-align:center}.title h2{font-size:30px;margin:0 0 8px}.muted{color:#667085}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-top:25px}.card{background:#fff;border-radius:14px;padding:18px;box-shadow:0 5px 20px #14213d10}.emoji{height:145px;border-radius:11px;background:#eef4ff;display:grid;place-items:center;font-size:55px}.stars{color:#f5a623}.price{font-weight:800;font-size:19px;margin:8px 0}.old{text-decoration:line-through;color:#98a2b3;font-size:13px;margin-left:5px}.btn{border:0;background:#1769e0;color:#fff;padding:11px 14px;border-radius:9px;font-weight:700;cursor:pointer;width:100%}
+.catalog{grid-template-columns:repeat(4,1fr)}.cat{text-align:center;font-weight:700}.cat div{font-size:38px}
+.checkout{max-width:650px;margin:30px auto;background:#fff;padding:22px;border-radius:14px}.checkout input,.checkout select{width:100%;padding:12px;margin:6px 0 13px;border:1px solid #d8dee9;border-radius:8px}
+footer{background:#101a2d;color:#fff;text-align:center;padding:28px;margin-top:40px}
+@media(max-width:800px){.grid,.catalog{grid-template-columns:repeat(2,1fr)}.hero h1{font-size:35px}}@media(max-width:500px){.grid,.catalog{grid-template-columns:1fr}.nav a{display:none}}
+</style>
+</head>
+<body>
+<header><div class="nav">
+<div class="logo">NAYAB STORE</div>
+<a href="#catalog">Catalog</a><a href="#products">Products</a><a href="#checkout">Checkout</a>
+<button class="cart" onclick="alert('Cart items: '+cart.length)">Cart (<span id="cartCount">0</span>)</button>
+</div></header>
+
+<section class="hero"><div class="heroIn">
+<h1>Professional Online Store</h1>
+<p>Milk, biscuits, grocery and beverages — with products, ratings, reviews, cart and checkout.</p>
+</div></section>
+
+<section class="wrap" id="catalog"><div class="title"><h2>Shop by Catalog</h2><p class="muted">Separate categories for your products.</p></div>
+<div class="grid catalog">
+<div class="card cat"><div>🥛</div>Milk & Dairy</div>
+<div class="card cat"><div>🍪</div>Biscuits & Snacks</div>
+<div class="card cat"><div>🛒</div>Grocery</div>
+<div class="card cat"><div>🧃</div>Beverages</div>
+</div></section>
+
+<section class="wrap" id="products"><div class="title"><h2>Products</h2><p class="muted">Demo products. Production version loads published products from Supabase.</p></div>
+<div class="grid">
+<div class="card"><div class="emoji">🥛</div><h3>Fresh Milk 1L</h3><div class="stars">★★★★★</div><small>4.9 • 128 reviews</small><div class="price">Rs. 280</div><button class="btn" onclick="add('Fresh Milk 1L')">Add to Cart</button></div>
+<div class="card"><div class="emoji">🍪</div><h3>Premium Biscuits</h3><div class="stars">★★★★★</div><small>4.8 • 94 reviews</small><div class="price">Rs. 180</div><button class="btn" onclick="add('Premium Biscuits')">Add to Cart</button></div>
+<div class="card"><div class="emoji">🧃</div><h3>Fruit Drink</h3><div class="stars">★★★★☆</div><small>4.5 • 61 reviews</small><div class="price">Rs. 150</div><button class="btn" onclick="add('Fruit Drink')">Add to Cart</button></div>
+<div class="card"><div class="emoji">🍚</div><h3>Premium Rice</h3><div class="stars">★★★★★</div><small>4.9 • 76 reviews</small><div class="price">Rs. 620</div><button class="btn" onclick="add('Premium Rice')">Add to Cart</button></div>
+</div></section>
+
+<section class="checkout" id="checkout"><h2>Customer Checkout</h2>
+<label>Full Name</label><input id="name" placeholder="Full name">
+<label>Phone</label><input id="phone" placeholder="03xx xxxxxxx">
+<label>Address</label><input id="address" placeholder="Delivery address">
+<label>Payment Method</label><select id="payment"><option value="COD">Cash on Delivery</option><option value="ACCOUNT">Account</option></select>
+<label>Delivery Charge (admin controlled)</label><input id="delivery" type="number" value="0">
+<button class="btn" onclick="placeOrder()">Place Order</button>
+<p id="orderMsg" class="muted"></p>
+</section>
+
+<footer>Nayab Store • Online Store</footer>
+
+<script>
+let cart=[];
+function add(name){cart.push(name);document.getElementById('cartCount').textContent=cart.length;alert(name+' added to cart.')}
+function placeOrder(){
+ const name=document.getElementById('name').value.trim();
+ const phone=document.getElementById('phone').value.trim();
+ const address=document.getElementById('address').value.trim();
+ if(!name||!phone||!address){alert('Please complete customer details.');return}
+ const order='NAY-'+Date.now().toString().slice(-8);
+ document.getElementById('orderMsg').innerHTML='Order placed: <b>'+order+'</b><br>Payment: '+document.getElementById('payment').value+'<br>Delivery charge: Rs. '+document.getElementById('delivery').value+'<br>Confirmation message ready.';
+}
+</script>
+</body>
+</html>
