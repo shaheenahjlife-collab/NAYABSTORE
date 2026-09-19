@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Nayab Store POS</title>
+<style>
+body{font-family:Arial,sans-serif;margin:0;background:#f4f6f8;color:#17202a}
+header{background:#111827;color:white;padding:18px 24px;display:flex;justify-content:space-between;align-items:center}
+main{max-width:1200px;margin:20px auto;padding:0 16px}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px}
+.card{background:white;border-radius:12px;padding:18px;box-shadow:0 2px 10px #0001}
+button{padding:11px 15px;border:0;border-radius:8px;cursor:pointer;background:#2563eb;color:white}
+input,select{width:100%;padding:11px;margin:6px 0 12px;box-sizing:border-box;border:1px solid #ddd;border-radius:8px}
+table{width:100%;border-collapse:collapse;background:white}th,td{padding:10px;border-bottom:1px solid #eee;text-align:left}
+.notice{padding:12px;background:#fff7ed;border-radius:8px;margin:12px 0}
+</style></head>
+<body>
+<header><b>NAYAB STORE — Professional POS</b><span id="status">Offline-ready</span></header>
+<main>
+<div class="grid">
+<div class="card"><h3>Billing</h3><p>Barcode/manual product entry and invoice.</p><button onclick="focusScan()">Start Billing</button></div>
+<div class="card"><h3>Stock</h3><p>Purchases, sales and returns update stock.</p><button onclick="alert('Stock module ready for database connection')">Stock Management</button></div>
+<div class="card"><h3>Credit / Udhar</h3><p>Customer balances and payment history.</p><button onclick="alert('Credit ledger module ready')">Open Ledger</button></div>
+<div class="card"><h3>Salesmen</h3><p>Sales, orders and payment tracking.</p><button onclick="alert('Salesman module ready')">Salesmen</button></div>
+</div>
+<div class="card" style="margin-top:18px">
+<h2>Quick Billing</h2>
+<input id="barcode" placeholder="Scan barcode with USB/Bluetooth/Wi-Fi scanner, or type barcode" autofocus>
+<input id="product" placeholder="Product name">
+<input id="qty" type="number" value="1" min="1">
+<input id="price" type="number" step="0.01" placeholder="Price">
+<button onclick="addItem()">Add Item</button>
+<div class="notice">Most Bluetooth/Wi-Fi barcode scanners behave like a keyboard: pair/connect the scanner, click the barcode field, and scan. Camera scanning can be added with a browser-supported scanner library.</div>
+<table><thead><tr><th>Barcode</th><th>Product</th><th>Qty</th><th>Price</th><th>Total</th></tr></thead><tbody id="items"></tbody></table>
+<h3>Grand Total: <span id="total">0.00</span></h3>
+<button onclick="saveBill()">Save Bill Locally</button>
+</div>
+</main>
+<script>
+let items=JSON.parse(localStorage.getItem('nayab_items')||'[]');
+function render(){let t=0;document.querySelector('#items').innerHTML=items.map(x=>{let s=x.qty*x.price;t+=s;return `<tr><td>${x.barcode}</td><td>${x.product}</td><td>${x.qty}</td><td>${x.price}</td><td>${s.toFixed(2)}</td></tr>`}).join('');document.querySelector('#total').textContent=t.toFixed(2)}
+function addItem(){let barcode=document.querySelector('#barcode').value,product=document.querySelector('#product').value,qty=+document.querySelector('#qty').value,price=+document.querySelector('#price').value;if(!product||!price)return alert('Product and price required');items.push({barcode,product,qty,price});localStorage.setItem('nayab_items',JSON.stringify(items));render();document.querySelector('#barcode').value='';document.querySelector('#product').value='';document.querySelector('#price').value='';document.querySelector('#barcode').focus()}
+function saveBill(){localStorage.setItem('nayab_last_bill',JSON.stringify({items,total:document.querySelector('#total').textContent,date:new Date().toISOString()}));alert('Bill saved locally. Connect Supabase to sync it online.')}
+function focusScan(){document.querySelector('#barcode').focus()}
+render();
+</script></body></html>
