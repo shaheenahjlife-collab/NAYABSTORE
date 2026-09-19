@@ -1,0 +1,1 @@
+Nayab Store VIP POS. Open index.html. Run sql/nayab_store_vip.sql once in Supabase SQL Editor. Browser local storage handles offline operation; pending sales can sync online. This is a browser POS and should be secured with Supabase Auth/RLS before public deployment.
