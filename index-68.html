@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Nayab Store — VIP POS</title>
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:Arial,Helvetica,sans-serif;background:#f3f6fa;color:#182230}
+header{background:#111827;color:#fff;padding:16px 20px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:5}
+.brand{font-size:22px;font-weight:800}.status{font-size:13px;padding:8px 12px;border-radius:20px;background:#374151}
+nav{display:flex;gap:8px;padding:12px;background:#fff;border-bottom:1px solid #ddd;overflow:auto}
+nav button{border:0;background:#eef2f7;padding:11px 15px;border-radius:10px;cursor:pointer;white-space:nowrap}
+nav button.active{background:#111827;color:#fff}
+main{padding:18px;max-width:1400px;margin:auto}.page{display:none}.page.active{display:block}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:14px}.card{background:#fff;border:1px solid #e5e7eb;border-radius:14px;padding:16px;box-shadow:0 3px 12px #0000000a}
+.kpi{font-size:28px;font-weight:800;margin-top:8px}.muted{color:#6b7280;font-size:13px}
+.row{display:flex;gap:10px;flex-wrap:wrap}.row>*{flex:1;min-width:130px}
+input,select,button{font:inherit}input,select{width:100%;padding:11px;border:1px solid #cfd6df;border-radius:9px;background:#fff}
+button.primary{background:#2563eb;color:#fff;border:0;padding:11px 16px;border-radius:9px;cursor:pointer;font-weight:700}
+button.success{background:#16a34a;color:#fff;border:0;padding:11px 16px;border-radius:9px;cursor:pointer;font-weight:700}
+button.danger{background:#dc2626;color:#fff;border:0;padding:9px 12px;border-radius:8px;cursor:pointer}
+table{width:100%;border-collapse:collapse;margin-top:14px;background:#fff}th,td{padding:10px;border-bottom:1px solid #e5e7eb;text-align:left;font-size:14px}
+.bill{display:grid;grid-template-columns:1.5fr 1fr;gap:16px}.total{font-size:24px;font-weight:800}.empty{padding:30px;text-align:center;color:#6b7280}
+@media(max-width:850px){.bill{grid-template-columns:1fr}header{position:static}}
+@media print{header,nav,.no-print{display:none!important}.page{display:none!important}.print-area{display:block!important}}
+</style>
+</head>
+<body>
+<header><div class="brand">NAYAB STORE — VIP POS</div><div id="net" class="status">Checking…</div></header>
+<nav>
+<button class="active" data-page="dashboard">Dashboard</button><button data-page="billing">Billing</button>
+<button data-page="products">Products</button><button data-page="customers">Customers / Udhar</button>
+<button data-page="salesmen">Salesmen</button><button data-page="orders">Orders</button><button data-page="reports">Reports</button>
+</nav>
+<main>
+<section id="dashboard" class="page active">
+<h2>Dashboard</h2><div class="grid">
+<div class="card">Today Sales<div class="kpi" id="todaySales">0</div></div>
+<div class="card">Total Orders<div class="kpi" id="orderCount">0</div></div>
+<div class="card">Products<div class="kpi" id="productCount">0</div></div>
+<div class="card">Customers<div class="kpi" id="customerCount">0</div></div>
+</div>
+<div class="card" style="margin-top:16px"><h3>Offline Mode</h3><p class="muted">Bills created while offline are saved in this browser and queued for sync. When the internet returns, the app attempts synchronization.</p><button class="primary" onclick="syncQueue()">Sync Pending Bills</button> <span id="queueInfo"></span></div>
+</section>
+
+<section id="billing" class="page">
+<h2>New Bill</h2>
+<div class="bill">
+<div>
+<div class="card">
+<div class="row"><input id="barcode" placeholder="Scan barcode / type barcode" autofocus><button class="primary" onclick="scanProduct()">Add</button></div>
+<div class="row" style="margin-top:10px"><input id="searchProduct" placeholder="Search product name" oninput="renderProductSearch()"></div>
+<div id="productSearch"></div>
+</div>
+<div class="card" style="margin-top:14px">
+<h3>Cart</h3><div id="cart"></div>
+</div>
+</div>
+<div>
+<div class="card">
+<label>Customer</label><select id="customerSelect"></select>
+<label style="display:block;margin-top:10px">Salesman</label><select id="salesmanSelect"></select>
+<label style="display:block;margin-top:10px">Discount</label><input id="discount" type="number" value="0" min="0" oninput="renderCart()">
+<div style="margin-top:16px">Subtotal <b id="subtotal">0</b></div>
+<div>Grand Total <span class="total" id="grandTotal">0</span></div>
+<button class="success" style="width:100%;margin-top:14px" onclick="saveBill()">SAVE BILL</button>
+<button class="primary" style="width:100%;margin-top:8px" onclick="printCurrentBill()">PRINT</button>
+</div>
+</div>
+</div>
+</section>
+
+<section id="products" class="page"><h2>Products</h2>
+<div class="card"><div class="row"><input id="pName" placeholder="Product name"><input id="pBarcode" placeholder="Barcode"><input id="pPrice" type="number" placeholder="Sale price"><input id="pStock" type="number" placeholder="Opening stock"><button class="primary" onclick="addProduct()">Add Product</button></div></div>
+<div class="card" style="margin-top:14px"><div id="productsTable"></div></div></section>
+
+<section id="customers" class="page"><h2>Customers / Udhar</h2>
+<div class="card"><div class="row"><input id="cName" placeholder="Customer name"><input id="cPhone" placeholder="Phone"><button class="primary" onclick="addCustomer()">Add Customer</button></div></div>
+<div class="card" style="margin-top:14px"><div id="customersTable"></div></div></section>
+
+<section id="salesmen" class="page"><h2>Salesmen</h2>
+<div class="card"><div class="row"><input id="sName" placeholder="Salesman name"><input id="sPhone" placeholder="Phone"><button class="primary" onclick="addSalesman()">Add Salesman</button></div></div>
+<div class="card" style="margin-top:14px"><div id="salesmenTable"></div></div></section>
+
+<section id="orders" class="page"><h2>Orders</h2><div class="card"><div id="ordersTable"></div></div></section>
+<section id="reports" class="page"><h2>Reports</h2><div class="grid">
+<div class="card"><b>Sales total</b><div class="kpi" id="reportSales">0</div></div>
+<div class="card"><b>Pending offline bills</b><div class="kpi" id="reportQueue">0</div></div>
+</div></section>
+</main>
+
+<script>
+
+function showError(msg){
+  let t=$("toast"); if(!t){t=document.createElement("div");t.id="toast";t.style.cssText="position:fixed;right:18px;bottom:18px;z-index:9999;padding:13px 16px;border-radius:10px;background:#b91c1c;color:#fff;box-shadow:0 8px 30px #0003;font-weight:700";document.body.appendChild(t);}
+  t.textContent=msg;t.style.background="#b91c1c";t.style.display="block";clearTimeout(t._x);t._x=setTimeout(()=>t.style.display="none",3500);
+}
+function showOk(msg){
+  let t=$("toast"); if(!t){t=document.createElement("div");t.id="toast";t.style.cssText="position:fixed;right:18px;bottom:18px;z-index:9999;padding:13px 16px;border-radius:10px;color:#fff;box-shadow:0 8px 30px #0003;font-weight:700";document.body.appendChild(t);}
+  t.textContent=msg;t.style.background="#15803d";t.style.display="block";clearTimeout(t._x);t._x=setTimeout(()=>t.style.display="none",2500);
+}
+window.addEventListener("error",e=>showError("System error: "+e.message));
+const SUPABASE_URL="https://jrwzrvyqtfqoqendruox.supabase.co";
+const $=id=>document.getElementById(id);
+const uid=()=>window.crypto?.randomUUID?crypto.randomUUID():"id-"+Date.now()+"-"+Math.random().toString(36).slice(2);
+const SUPABASE_KEY="sb_publishable_YM4NeqbO2qe_RE9PeHw1Ow_HKjRcusK";
+const LS={products:"nayab_products",customers:"nayab_customers",salesmen:"nayab_salesmen",orders:"nayab_orders",queue:"nayab_queue"};
+let products=[],customers=[],salesmen=[],orders=[],cart=[];
+
+function load(){for(const [k,v] of Object.entries(LS)){try{window[k]=JSON.parse(localStorage.getItem(v)||"[]")}catch{window[k]=[]}}
+products=window.nayab_products;customers=window.nayab_customers;salesmen=window.nayab_salesmen;orders=window.nayab_orders;
+renderAll()}
+function saveAll(){localStorage.setItem(LS.products,JSON.stringify(products));localStorage.setItem(LS.customers,JSON.stringify(customers));localStorage.setItem(LS.salesmen,JSON.stringify(salesmen));localStorage.setItem(LS.orders,JSON.stringify(orders))}
+function money(n){return "Rs "+Number(n||0).toLocaleString()}
+function renderAll(){renderProducts();renderCustomers();renderSalesmen();renderOrders();renderSelects();renderCart();dashboard();renderProductSearch()}
+function renderProducts(){$("productsTable").innerHTML=products.length?`<table><tr><th>Name</th><th>Barcode</th><th>Price</th><th>Stock</th><th></th></tr>${products.map((p,i)=>`<tr><td>${esc(p.name)}</td><td>${esc(p.barcode||"")}</td><td>${money(p.price)}</td><td>${p.stock}</td><td><button class="danger" onclick="delProduct(${i})">Delete</button></td></tr>`).join("")}</table>`:"<div class=empty>No products yet</div>"}
+function renderCustomers(){$("customersTable").innerHTML=customers.length?`<table><tr><th>Name</th><th>Phone</th><th>Udhar</th><th></th></tr>${customers.map((c,i)=>`<tr><td>${esc(c.name)}</td><td>${esc(c.phone||"")}</td><td>${money(c.credit||0)}</td><td><button class=danger onclick="delCustomer(${i})">Delete</button></td></tr>`).join("")}</table>`:"<div class=empty>No customers yet</div>"}
+function renderSalesmen(){$("salesmenTable").innerHTML=salesmen.length?`<table><tr><th>Name</th><th>Phone</th><th></th></tr>${salesmen.map((s,i)=>`<tr><td>${esc(s.name)}</td><td>${esc(s.phone||"")}</td><td><button class=danger onclick="delSalesman(${i})">Delete</button></td></tr>`).join("")}</table>`:"<div class=empty>No salesmen yet</div>"}
+function renderOrders(){$("ordersTable").innerHTML=orders.length?`<table><tr><th>Invoice</th><th>Date</th><th>Total</th><th>Status</th><th></th></tr>${orders.slice().reverse().map((o,i)=>`<tr><td>${esc(o.invoice)}</td><td>${new Date(o.date).toLocaleString()}</td><td>${money(o.total)}</td><td>${o.synced?"Online":"Offline/Pending"}</td><td><button class=primary onclick='printOrder(${JSON.stringify(o).replace(/'/g,"&#39;")})'>Print</button></td></tr>`).join("")}</table>`:"<div class=empty>No orders yet</div>"}
+function renderSelects(){$("customerSelect").innerHTML='<option value="">Walk-in Customer</option>'+customers.map((c,i)=>`<option value="${i}">${esc(c.name)}${c.phone?" — "+esc(c.phone):""}</option>`).join("");$("salesmanSelect").innerHTML='<option value="">No Salesman</option>'+salesmen.map((s,i)=>`<option value="${i}">${esc(s.name)}</option>`).join("")}
+function renderProductSearch(){let q=$("searchProduct").value.toLowerCase();let a=products.filter(p=>!q||p.name.toLowerCase().includes(q)||String(p.barcode||"").includes(q)).slice(0,20);$("productSearch").innerHTML=a.map(p=>`<button style="margin:5px 3px;background:#fff;border:1px solid #ddd;padding:9px;border-radius:8px" onclick="addToCart('${p.id}')">${esc(p.name)} — ${money(p.price)} — stock ${p.stock}</button>`).join("")}
+function addToCart(id){let p=products.find(x=>x.id===id);if(!p||p.stock<=0)return alert("Out of stock");let x=cart.find(x=>x.id===id);if(x){if(x.qty>=p.stock)return alert("Stock limit reached");x.qty++}else cart.push({id:p.id,name:p.name,price:Number(p.price),qty:1});renderCart()}
+function scanProduct(){let b=document.getElementById("barcode").value.trim();let p=products.find(x=>String(x.barcode||"")===b);if(!p)return alert("Barcode not found");addToCart(p.id);document.getElementById("barcode").value=""}
+function renderCart(){let box=$("cart");box.innerHTML=cart.length?`<table><tr><th>Item</th><th>Qty</th><th>Price</th><th></th></tr>${cart.map((x,i)=>`<tr><td>${esc(x.name)}</td><td><button onclick="qty(${i},-1)">−</button> ${x.qty} <button onclick="qty(${i},1)">+</button></td><td>${money(x.price*x.qty)}</td><td><button class=danger onclick="cart.splice(${i},1);renderCart()">×</button></td></tr>`).join("")}</table>`:"<div class=empty>Cart is empty</div>";let sub=cart.reduce((a,x)=>a+x.price*x.qty,0);let d=Number($("discount").value||0);$("subtotal").textContent=money(sub);$("grandTotal").textContent=money(Math.max(0,sub-d));}
+function qty(i,d){let p=products.find(x=>x.id===cart[i].id);cart[i].qty+=d;if(cart[i].qty<=0)cart.splice(i,1);else if(cart[i].qty>p.stock)cart[i].qty=p.stock;renderCart()}
+function addProduct(){
+  const name=$("pName").value.trim();
+  const barcode=$("pBarcode").value.trim();
+  const price=Number($("pPrice").value);
+  const stock=Number($("pStock").value||0);
+  if(!name){showError("Product name is required."); $("pName").focus(); return;}
+  if(!Number.isFinite(price)||price<=0){showError("Enter a valid sale price."); $("pPrice").focus(); return;}
+  if(!Number.isFinite(stock)||stock<0){showError("Enter a valid stock quantity."); $("pStock").focus(); return;}
+  if(barcode && products.some(p=>String(p.barcode||"")===barcode)){
+    showError("This barcode already exists."); $("pBarcode").focus(); return;
+  }
+  try{
+    products.push({id:uid(),name,barcode,price,stock});
+    saveAll();
+    $("pName").value=""; $("pBarcode").value=""; $("pPrice").value=""; $("pStock").value="";
+    renderAll();
+    showOk("Product added successfully.");
+  }catch(e){showError("Could not save product: "+e.message);}
+}
+function addCustomer(){let name=cName.value.trim();if(!name)return alert("Customer name required");customers.push({id:uid(),name,phone:cPhone.value.trim(),credit:0});saveAll();cName.value=cPhone.value="";renderAll()}
+function addSalesman(){let name=sName.value.trim();if(!name)return alert("Salesman name required");salesmen.push({id:uid(),name,phone:sPhone.value.trim()});saveAll();sName.value=sPhone.value="";renderAll()}
+function delProduct(i){if(confirm("Delete product?")){products.splice(i,1);saveAll();renderAll()}}
+function delCustomer(i){if(confirm("Delete customer?")){customers.splice(i,1);saveAll();renderAll()}}
+function delSalesman(i){if(confirm("Delete salesman?")){salesmen.splice(i,1);saveAll();renderAll()}}
+function saveBill(){if(!cart.length)return alert("Cart is empty");let sub=cart.reduce((a,x)=>a+x.price*x.qty,0),discount=Number($("discount").value||0),total=Math.max(0,sub-discount),ci=$("customerSelect").value,si=$("salesmanSelect").value;let o={id:uid(),invoice:"NS-"+Date.now(),date:new Date().toISOString(),customer:ci===""?null:customers[ci],salesman:si===""?null:salesmen[si],items:cart.map(x=>({...x})),subtotal:sub,discount,total,synced:false};for(const x of cart){let p=products.find(p=>p.id===x.id);p.stock-=x.qty}if(o.customer)o.customer=customers[ci];orders.push(o);if(o.customer&&total){customers[ci].credit=Number(customers[ci].credit||0)+total}let q=JSON.parse(localStorage.getItem(LS.queue)||"[]");q.push(o);localStorage.setItem(LS.queue,JSON.stringify(q));cart=[];$("discount").value=0;saveAll();renderAll();alert("Bill saved: "+o.invoice);if(navigator.onLine)syncQueue()}
+async function syncQueue(){let q=JSON.parse(localStorage.getItem(LS.queue)||"[]");if(!navigator.onLine){updateQueue();return}if(!q.length){updateQueue();return}let remaining=[];for(const o of q){try{let h={"apikey":SUPABASE_KEY,"Authorization":"Bearer "+SUPABASE_KEY,"Content-Type":"application/json","Prefer":"return=minimal"};let r=await fetch(SUPABASE_URL+"/orders",{method:"POST",headers:h,body:JSON.stringify({invoice_no:o.invoice,total:o.total,discount:o.discount,subtotal:o.subtotal,customer_name:o.customer?.name||null,salesman_name:o.salesman?.name||null,status:"completed"})});if(!r.ok)throw new Error(await r.text());o.synced=true;let local=orders.find(x=>x.id===o.id);if(local)local.synced=true}catch(e){remaining.push(o)}}localStorage.setItem(LS.queue,JSON.stringify(remaining));saveAll();updateQueue();renderOrders();dashboard()}
+function updateQueue(){let q=JSON.parse(localStorage.getItem(LS.queue)||"[]");document.getElementById("queueInfo").textContent=q.length+" pending bill(s)";document.getElementById("reportQueue").textContent=q.length}
+function dashboard(){let today=new Date().toDateString(),sales=orders.filter(o=>new Date(o.date).toDateString()===today).reduce((a,o)=>a+o.total,0);$("todaySales").textContent=money(sales);$("orderCount").textContent=orders.length;$("productCount").textContent=products.length;$("customerCount").textContent=customers.length;$("reportSales").textContent=money(orders.reduce((a,o)=>a+o.total,0));updateQueue()}
+function printCurrentBill(){if(!orders.length)return alert("Save bill first");printOrder(orders[orders.length-1])}
+function printOrder(o){let w=window.open("","_blank","width=500,height=700");if(!w)return alert("Popup blocked. Allow popups for this file.");w.document.write(`<html><head><title>${o.invoice}</title><style>body{font-family:Arial;padding:20px}table{width:100%;border-collapse:collapse}td,th{padding:7px;border-bottom:1px solid #ddd;text-align:left}.total{font-size:22px;font-weight:bold}</style></head><body><h2>NAYAB STORE</h2><div>Invoice: ${esc(o.invoice)}</div><div>${new Date(o.date).toLocaleString()}</div><hr><table><tr><th>Item</th><th>Qty</th><th>Amount</th></tr>${o.items.map(x=>`<tr><td>${esc(x.name)}</td><td>${x.qty}</td><td>${money(x.price*x.qty)}</td></tr>`).join("")}</table><hr><div>Subtotal: ${money(o.subtotal)}</div><div>Discount: ${money(o.discount)}</div><div class=total>Total: ${money(o.total)}</div><p>Thank you!</p><script>window.onload=()=>window.print()<\/script></body></html>`);w.document.close()}
+function esc(s){return String(s??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]))}
+document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>{document.querySelectorAll("nav button").forEach(x=>x.classList.remove("active"));b.classList.add("active");document.querySelectorAll(".page").forEach(x=>x.classList.remove("active"));document.getElementById(b.dataset.page).classList.add("active")});
+window.addEventListener("online",()=>{$("net").textContent="Online";$("net").style.background="#166534";syncQueue()});window.addEventListener("offline",()=>{$("net").textContent="Offline — Local Mode";$("net").style.background="#92400e"});
+$("net").textContent=navigator.onLine?"Online":"Offline — Local Mode";load();updateQueue();
+</script>
+</body></html>
